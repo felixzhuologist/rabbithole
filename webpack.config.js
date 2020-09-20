@@ -1,9 +1,9 @@
 module.exports = {
-  entry: './src/index.jsx',
+  entry: './src/index.tsx',
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.(t|j)sx?$/,
         exclude: /node_modules/,
         use: ['babel-loader']
       }
@@ -18,6 +18,8 @@ module.exports = {
     filename: 'index.js'
   },
   mode: 'development',
+  // see https://github.com/webpack/webpack-dev-server/issues/1161
+  devtool: 'inline-source-map',
   devServer: {
     contentBase: './dist'
   }
