@@ -7,3 +7,7 @@
 ## Running
 
 	npm run start
+
+## Formatting code
+
+	npm run format
