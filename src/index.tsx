@@ -45,7 +45,7 @@ const initialState = (): State => {
 const UPDATE_TEXT = 'UPDATE_TEXT';
 const SET_NODE = 'SET_NODE';
 const PUSH_CHILD = 'PUSH_CHILD';
-const LOAD_TREE = 'LOAD_TREE';
+const LOAD_STATE = 'LOAD_STATE';
 
 type Action = {
   type: string;
@@ -79,11 +79,8 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         tree: treeReducer(state.tree, action),
       };
-    case LOAD_TREE:
-      return {
-        tree: JSON.parse(action.payload),
-        currentNode: 1, // assume root is always 1
-      };
+    case LOAD_STATE:
+      return JSON.parse(action.payload);
     default:
       return state;
   }
@@ -120,7 +117,7 @@ const treeReducer = (tree: Tree, action: Action): Tree => {
 
 const App: React.FunctionComponent<Props> = (props: Props) => {
   const [state, dispatch] = React.useReducer(reducer, initialState());
-  const [dumpedTree, setDumpedTree] = React.useState('');
+  const [dumpedState, setDumpedState] = React.useState('');
 
   const { tree, currentNode } = state;
   const { data, parent, children } = tree[currentNode];
@@ -172,7 +169,7 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
       <button
         type="button"
         onClick={() => {
-          console.log(JSON.stringify(tree, null, 2));
+          console.log(JSON.stringify(state, null, 2));
         }}
       >
         dump tree
@@ -180,13 +177,13 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
       <br />
       <textarea
         name="loadtree"
-        value={dumpedTree}
-        onChange={(event) => setDumpedTree(event.target.value)}
+        value={dumpedState}
+        onChange={(event) => setDumpedState(event.target.value)}
       />
       <button
         type="button"
         onClick={() => {
-          dispatch({ type: LOAD_TREE, payload: dumpedTree });
+          dispatch({ type: LOAD_STATE, payload: dumpedState });
         }}
       >
         load tree
