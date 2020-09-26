@@ -11,3 +11,17 @@
 ## Formatting code
 
 	npm run format
+
+## Other commands
+
+### Build CSS only
+
+When developing, use
+
+	npm run css:watch
+
+which will build and watch for changes.
+
+To build CSS for prod, run
+
+	npm run css:build
