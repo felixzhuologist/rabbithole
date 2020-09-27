@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import ContentEditable from 'react-contenteditable';
 
 import Button from './Button';
 
@@ -201,21 +202,19 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </svg>
             </button>
-            <div
-              className="align-baseline focus:outline-none flex-grow text-base "
-              contentEditable
-              onInput={(event) => {
+            <ContentEditable
+              className="focus:outline-none flex-grow"
+              html={tree[id].data}
+              onChange={(event) => {
                 dispatch({
                   type: UPDATE_TEXT,
                   payload: {
                     id,
-                    value: event.currentTarget.textContent,
+                    value: event.target.value,
                   } as UpdateData,
                 });
               }}
-            >
-              {tree[id].data}
-            </div>
+            />
           </div>
         ))}
       </div>
