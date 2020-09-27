@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.data-row > .data-row-actions {
+  visibility: hidden;
+}
+
+.data-row:hover > .data-row-actions {
+  visibility: visible;
+}
