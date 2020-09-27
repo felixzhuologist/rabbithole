@@ -4,6 +4,10 @@ import ContentEditable from 'react-contenteditable';
 
 import Button from './Button';
 
+function insert<T>(array: T[], index: number, val: T): T[] {
+  return [...array.slice(0, index), val, ...array.slice(index, array.length)];
+}
+
 type Props = {};
 
 type Id = number;
@@ -58,7 +62,8 @@ const initialState = (): State => {
         children: [3, 5],
       },
       '3': {
-        data: 'well it could be this',
+        data:
+          "well it could be this i guess.. let's trying making this line really long well it could be this i guess.. let's trying making this line really long well it could be this i guess.. let's trying making this line really long well it could be this i guess.. let's trying making this line really long well it could be this i guess.. let's trying making this line really long",
         parent: 2,
         children: [4],
       },
@@ -95,7 +100,13 @@ type UpdateData = {
 
 type SetNode = Id;
 
-type PushChild = Id;
+type PushChild = {
+  // node to push child to
+  node: Id;
+  // index that the new node should be inserted at in `node`'s children, or
+  // undefined to append to the end
+  index?: number;
+};
 
 const reducer = (state: State, action: Action): State => {
   console.log(state, action);
@@ -115,7 +126,8 @@ const reducer = (state: State, action: Action): State => {
         ...action,
         payload: {
           nextId: state.nextId,
-          nodeId: action.payload,
+          nodeId: action.payload.node,
+          index: action.payload.index,
         },
       };
       return {
@@ -143,14 +155,16 @@ const treeReducer = (tree: Tree, action: Action): Tree => {
         },
       };
     case PUSH_CHILD: {
-      const { nodeId, nextId } = action.payload;
+      const { nodeId, nextId, index } = action.payload;
       const node: Node = tree[nodeId];
       const child = newNode(nodeId);
       return {
         ...tree,
         [nodeId]: {
           ...node,
-          children: [...node.children, nextId],
+          children: index
+            ? insert(node.children, index, nextId)
+            : [...node.children, nextId],
         },
         [nextId]: child,
       };
@@ -163,6 +177,8 @@ const treeReducer = (tree: Tree, action: Action): Tree => {
 const App: React.FunctionComponent<Props> = (props: Props) => {
   const [state, dispatch] = React.useReducer(reducer, initialState());
   const [dumpedState, setDumpedState] = React.useState('');
+  const rowRefs = React.useRef([]);
+  const [pendingFocus, setPendingFocus] = React.useState<number | null>(null);
 
   const { tree, currentNode } = state;
   const { data, parent, children } = tree[currentNode];
@@ -171,52 +187,111 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
     dispatch({ type: PUSH_CHILD, payload: currentNode });
   }
 
+  React.useEffect(() => {
+    if (pendingFocus !== null) {
+      rowRefs.current[pendingFocus].getEl().focus();
+      setPendingFocus(null);
+    }
+  }, [pendingFocus]);
+
   return (
     <div className="container mx-auto m-8">
       <h3 className="font-sans text-lg font-semibold">{data}</h3>
       <div className="flex flex-col space-y-2 ml-2 my-4">
-        {children.map((id) => (
-          <div className="flex data-row space-x-2" key={id}>
-            <button
-              type="button"
-              className="data-row-actions inline-flex items-center px-1.5 py-1.5 text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
-              onClick={() => {
-                dispatch({ type: SET_NODE, payload: id as SetNode });
-              }}
+        {children.map((id, index, children) => {
+          return (
+            <div
+              className={`flex data-row space-x-2 dummy-${index}`}
+              key={`${id}.${index}`}
             >
-              <svg
-                className="text-orange-700 h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+              {/* a combination of the id and index are used as the key above to
+               force each row to be re-rendered when the data changes. this is
+               because if React does not re-render, the values for `index` and
+               `children` will be stale, causing the PUSH_CHILD and re-focusing
+               actions to have weird behavior (e.g. when inserting between the
+               elements in a list of size two, you could end up with indices
+               [0, 1, 1]) */}
+              <button
+                type="button"
+                className="data-row-actions inline-flex items-center px-1.5 py-1.5 text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
+                onClick={() => {
+                  dispatch({ type: SET_NODE, payload: id as SetNode });
+                }}
               >
-                <path
-                  fillRule="evenodd"
-                  d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-            <ContentEditable
-              className="focus:outline-none flex-grow"
-              html={tree[id].data}
-              onChange={(event) => {
-                dispatch({
-                  type: UPDATE_TEXT,
-                  payload: {
-                    id,
-                    value: event.target.value,
-                  } as UpdateData,
-                });
-              }}
-            />
-          </div>
-        ))}
+                <svg
+                  className="text-orange-700 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+              <ContentEditable
+                ref={(el) => {
+                  rowRefs.current[index] = el;
+                }}
+                className="focus:outline-none flex-grow"
+                html={tree[id].data}
+                onKeyDown={(event) => {
+                  const sel = window.getSelection();
+                  if (
+                    event.key === 'Enter' &&
+                    sel.focusOffset === tree[id].data.length
+                  ) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    dispatch({
+                      type: PUSH_CHILD,
+                      payload: {
+                        node: currentNode,
+                        index: index + 1,
+                      },
+                    });
+                    setPendingFocus(index + 1);
+                  }
+                  if (
+                    event.keyCode === 40 &&
+                    index < rowRefs.current.length - 1
+                  ) {
+                    // DOWN
+                    if (sel.focusOffset === tree[id].data.length) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      rowRefs.current[index + 1].getEl().focus();
+                    }
+                  }
+                  if (event.keyCode == 38 && index > 0) {
+                    // UP
+                    if (sel.focusOffset === 0) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      rowRefs.current[index - 1].getEl().focus();
+                    }
+                  }
+                }}
+                onChange={(event) => {
+                  dispatch({
+                    type: UPDATE_TEXT,
+                    payload: {
+                      id,
+                      value: event.target.value,
+                    } as UpdateData,
+                  });
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
       <div className="flex space-x-2">
         {parent !== null && (
@@ -230,7 +305,10 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
         )}
         <Button
           onClick={() => {
-            dispatch({ type: PUSH_CHILD, payload: currentNode as PushChild });
+            dispatch({
+              type: PUSH_CHILD,
+              payload: { node: currentNode } as PushChild,
+            });
           }}
         >
           add child
