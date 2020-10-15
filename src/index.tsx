@@ -39,16 +39,19 @@ const newNode = (parent: Id | null): Node => ({
   children: [],
 });
 
+// const initialState = (): State => {
+//   const tree: Tree = {};
+//   const root: Node = newNode(null);
+//   const rootId = 1;
+//   tree[rootId] = root;
+//   return {
+//     tree,
+//     currentNode: rootId,
+//     nextId: 2,
+//   };
+// }
+
 const initialState = (): State => {
-  // const tree: Tree = {};
-  // const root: Node = newNode(null);
-  // const rootId = 1;
-  // tree[rootId] = root;
-  // return {
-  //   tree,
-  //   currentNode: rootId,
-  //   nextId: 2,
-  // };
   return {
     tree: {
       '1': {
@@ -184,7 +187,7 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
   const { data, parent, children } = tree[currentNode];
 
   if (children.length === 0) {
-    dispatch({ type: PUSH_CHILD, payload: currentNode });
+    dispatch({ type: PUSH_CHILD, payload: { node: currentNode } });
   }
 
   React.useEffect(() => {
