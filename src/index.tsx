@@ -53,7 +53,6 @@ import Button from './Button';
 //   };
 // };
 
-
 const DefaultElement = (props: RenderElementProps) => (
   <div {...props.attributes} className={`flex data-row space-x-2`}>
     <button
@@ -62,7 +61,9 @@ const DefaultElement = (props: RenderElementProps) => (
       type="button"
       className="data-row-actions inline-flex items-center text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
       onClick={() => {
-        {/*dispatch({ type: SET_NODE, payload: id as SetNode });*/}
+        {
+          /*dispatch({ type: SET_NODE, payload: id as SetNode });*/
+        }
       }}
     >
       <svg
@@ -84,18 +85,21 @@ const DefaultElement = (props: RenderElementProps) => (
       </svg>
     </button>
     <p>{props.children}</p>
-   </div>
+  </div>
 );
 
 const App: React.FunctionComponent<Props> = (props: Props) => {
   const [visibleNodes, setVisibleNodes] = React.useState(new Set([1, 3]));
 
-  const renderElement = React.useCallback((props: RenderElementProps) => {
-    if (!visibleNodes.has(props.element.id)) {
-      return null;
-    }
-    return <DefaultElement {...props} />
-  }, [visibleNodes]);
+  const renderElement = React.useCallback(
+    (props: RenderElementProps) => {
+      if (!visibleNodes.has(props.element.id)) {
+        return null;
+      }
+      return <DefaultElement {...props} />;
+    },
+    [visibleNodes]
+  );
   const editor = React.useMemo(() => withReact(createEditor()), []);
   const [value, setValue] = React.useState([
     {
@@ -121,19 +125,24 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
         {
           id: 5,
           type: 'paragraph',
-          children: [{ text: 'child2 '}],
+          children: [{ text: 'child2 ' }],
         },
-      ]
-    }
+      ],
+    },
   ]);
 
   return (
     <div className="container mx-auto m-8">
-      <h3 className="font-sans text-lg font-semibold">
-        Some topic title
-      </h3>
+      <h3 className="font-sans text-lg font-semibold">Some topic title</h3>
       <div className="flex flex-col space-y-2 ml-2 my-4">
-        <Slate editor={editor} value={value} onChange={newValue => { console.log(newValue); setValue(newValue); }}>
+        <Slate
+          editor={editor}
+          value={value}
+          onChange={(newValue) => {
+            console.log(newValue);
+            setValue(newValue);
+          }}
+        >
           <Editable renderElement={renderElement} />
         </Slate>
       </div>
