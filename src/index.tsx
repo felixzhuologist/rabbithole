@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ContentEditable from 'react-contenteditable';
+import { createEditor } from 'slate';
+import { Slate, Editable, withReact, RenderElementProps } from 'slate-react';
 
 import Button from './Button';
 
@@ -177,6 +179,10 @@ const treeReducer = (tree: Tree, action: Action): Tree => {
   }
 };
 
+const DefaultElement = (props: RenderElementProps) => (
+  <p {...props.attributes}>{props.children}</p>
+);
+
 const App: React.FunctionComponent<Props> = (props: Props) => {
   const [state, dispatch] = React.useReducer(reducer, initialState());
   const [dumpedState, setDumpedState] = React.useState('');
@@ -185,6 +191,44 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
 
   const { tree, currentNode } = state;
   const { data, parent, children } = tree[currentNode];
+
+  const [visibleNodes, setVisibleNodes] = React.useState(new Set([1, 3, 4, 5]));
+  const renderElement = React.useCallback((props: RenderElementProps) => {
+    if (!visibleNodes.has(props.element.id)) {
+      return null;
+    }
+    return <DefaultElement {...props} />
+  }, [visibleNodes]);
+  const editor = React.useMemo(() => withReact(createEditor()), []);
+  const [value, setValue] = React.useState([
+    {
+      id: 1,
+      type: 'paragraph',
+      children: [{ text: 'some text.' }],
+    },
+    {
+      id: 2,
+      type: 'paragraph',
+      children: [{ text: 'foo' }],
+    },
+    {
+      id: 3,
+      type: 'paragraph',
+      children: [
+        { text: 'parent' },
+        {
+          id: 4,
+          type: 'paragraph',
+          children: [{ text: 'child1' }],
+        },
+        {
+          id: 5,
+          type: 'paragraph',
+          children: [{ text: 'child2 '}],
+        },
+      ]
+    }
+  ]);
 
   if (children.length === 0) {
     dispatch({ type: PUSH_CHILD, payload: { node: currentNode } });
@@ -199,6 +243,9 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <div className="container mx-auto m-8">
+      <Slate editor={editor} value={value} onChange={newValue => { console.log(newValue); setValue(newValue); }}>
+        <Editable renderElement={renderElement} />
+      </Slate>
       <h3 className="font-sans text-lg font-semibold">{data}</h3>
       <div className="flex flex-col space-y-2 ml-2 my-4">
         {children.map((id, index, children) => {
