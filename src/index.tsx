@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import Button from './components/Button';
 import TitleElement from './components/TitleElement';
 import SlateContainer from './components/SlateContainer';
-import { INIT_CHILDREN, SET_NODE, initialState, reducer } from './state';
+import { MERGE_DATA, INIT_CHILDREN, SET_NODE, initialState, reducer } from './state';
 
 const App: React.FunctionComponent<{}> = (props: {}) => {
   const [state, dispatch] = React.useReducer(reducer, initialState());
@@ -13,7 +13,7 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
 
   const initialEditorData = children.map((id) => ({ id, ...tree[id].data }));
   const mergeEditorData = React.useCallback((data: SlateNode[]) => {
-    console.log('merging data: ', data);
+    dispatch({ type: MERGE_DATA, payload: data });
   }, []);
 
   if (children.length === 0) {

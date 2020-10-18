@@ -1,8 +1,9 @@
 import React from 'react';
+import { Node as SlateNode } from 'slate';
 import { RenderElementProps } from 'slate-react';
 
 type CustomRenderProps = {
-  rbOnPush: (id: string) => void;
+  rbOnPush: (id: string, localState: SlateNode[]) => void;
 };
 
 // TODO: augment RenderElementProps.Element with our own custom fields
@@ -13,7 +14,7 @@ const DefaultElement = (props: RenderElementProps & CustomRenderProps) => (
       contentEditable={false}
       type="button"
       className="data-row-actions inline-flex items-start text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
-      onClick={() => props.rbOnPush(props.element.id)}
+      onClick={() => props.rbOnPush(props.element.id, props.localState)}
     >
       <svg
         className="text-orange-700 h-5 w-5"

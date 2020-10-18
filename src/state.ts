@@ -1,4 +1,4 @@
-import produce from 'immer';
+import produce, { current } from 'immer';
 import { nanoid } from 'nanoid';
 import { Node as SlateNode } from 'slate';
 
@@ -32,7 +32,7 @@ export const initialState = (): State => {
           type: 'paragraph',
           children: [{ text: 'some starter text for ya' }],
         },
-        parent: 0,
+        parent: rootId,
         children: [],
       },
     },
@@ -42,24 +42,50 @@ export const initialState = (): State => {
 
 export const SET_NODE = 'SET_NODE';
 export const INIT_CHILDREN = 'INIT_CHILDREN';
+export const MERGE_DATA = 'MERGE';
 
 // TODO: type actions once they become unwieldy
-export const reducer = (state: State, action: any): State => {
+export const reducer = produce((state: State, action: any): State => {
+  console.log(current(state), action);
   switch (action.type) {
     case SET_NODE:
-      return {
-        ...state,
-        currentNode: action.payload,
-      };
+      state.currentNode = action.payload;
+      break;
     case INIT_CHILDREN:
-      return {
-        ...state,
-        tree: treeReducer(state.tree, action),
-      };
+      state.tree = treeReducer(state.tree, action);
+      break;
+    case MERGE_DATA:
+      const payload = action.payload as SlateNode[];
+      const updated = action.payload.map(node => node.id);
+
+      let parentId = null;
+      action.payload.forEach(node => {
+        const withoutId = {
+          type: node.type,
+          children: node.children,
+        };
+        if (node.id in state.tree) {
+          state.tree[node.id].data = withoutId;
+
+          // NOTE: the parents should all be the same. it would maybe be
+          // worth logging if that's not the case.
+          parentId = parentId || state.tree[node.id].parent;
+        } else {
+          console.assert(parentId !== null);
+          state.tree[node.id] = {
+            data: withoutId,
+            parent: parentId,
+            children: [],
+          };
+        }
+      });
+
+      state.tree[parentId].children = updated;
+      break;
     default:
-      return state;
+      break;
   }
-};
+});
 
 export const treeReducer = produce(
   (tree: Tree, action: any): Tree => {
@@ -74,9 +100,10 @@ export const treeReducer = produce(
 
         tree[action.payload].children = [id];
         tree[id] = newNode;
+        break;
       }
       default:
-        return tree;
+        break;
     }
   }
 );
