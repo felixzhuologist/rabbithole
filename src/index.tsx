@@ -1,7 +1,9 @@
+import produce from 'immer';
+import { nanoid } from 'nanoid';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ContentEditable from 'react-contenteditable';
-import { Editor, Node as SlateNode, createEditor } from 'slate';
+import { Editor, Node as SlateNode, createEditor, Text } from 'slate';
 import { Slate, Editable, withReact, RenderElementProps } from 'slate-react';
 
 import Button from './Button';
@@ -53,7 +55,7 @@ import Button from './Button';
 //   };
 // };
 
-type Id = number;
+type Id = string;
 
 type Node = {
   data: SlateNode | null;
@@ -66,28 +68,35 @@ type Tree = { [key: number]: Node };
 type State = {
   tree: Tree;
   currentNode: Id;
-  nextId: number;
 };
 
-const initialState: State = {
-  tree: {
-    '0': {
-      data: null,
-      parent: null,
-      children: [1],
-    },
-    '1': {
-      data: {
-        type: 'paragraph',
-        children: [{ text: 'some starter text for ya' }],
+const initialState = (): State => {
+  const rootId = nanoid();
+  const childId = nanoid();
+  return {
+    tree: {
+      [rootId]: {
+        data: null,
+        parent: null,
+        children: [childId],
       },
-      parent: 0,
-      children: [],
-    }
-  },
-  currentNode: 0,
-  nextId: 2,
+      [childId]: {
+        data: {
+          type: 'paragraph',
+          children: [{ text: 'some starter text for ya' }],
+        },
+        parent: 0,
+        children: [],
+      },
+    },
+    currentNode: rootId,
+  };
 };
+
+// TODO: generalize
+const TitleElement = (props: SlateNode) => (
+  <h3 className="font-sans text-lg font-semibold">{props.children[0].text}</h3>
+);
 
 const DefaultElement = (props: RenderElementProps) => (
   <div {...props.attributes} className={`flex data-row space-x-2`}>
@@ -125,90 +134,76 @@ const DefaultElement = (props: RenderElementProps) => (
   </div>
 );
 
-// https://github.com/ianstormtaylor/slate/blob/master/packages/slate-react/src/components/editable.tsx#L235
-// For some reason this type isn't exported. Is this different from the type that
-// the local onDOMBeforeInput receives?
-type SlateEvent = Event & {
-  inputType: string;
+type SlateContainerProps = {
+  value: SlateNode[];
+  mergeValue: (value: SlateNode[]) => void;
+  generateId: () => Id;
 };
 
-const App: React.FunctionComponent<{}> = (props: {}) => {
-  const [visibleNodes, setVisibleNodes] = React.useState(new Set([1, 3]));
+const SlateContainer = (props: SlateContainerProps) => {
+  const { value, mergeValue } = props;
+  const [localValue, setLocalValue] = React.useState(value);
+  React.useEffect(() => {
+    return () => {
+      mergeValue(localValue);
+    };
+  }, []);
 
-  const renderElement = React.useCallback(
-    (props: RenderElementProps) => {
-      if (!visibleNodes.has(props.element.id)) {
-        return null;
-      }
-      return <DefaultElement {...props} />;
-    },
-    [visibleNodes]
-  );
   const editor = React.useMemo(() => withReact(createEditor()), []);
-  const onDOMBeforeInput = React.useCallback((event: SlateEvent) => {
-    const { inputType } = event;
-    switch (inputType) {
-      case 'insertParagraph': {
-        Editor.insertBreak(editor)
-        event.preventDefault();
-        break;
-      }
-    }
-  }, [editor]);
 
-  // const [value, setValue] = React.useState([
-  //   {
-  //     id: 1,
-  //     type: 'paragraph',
-  //     children: [{ text: 'some text.' }],
-  //   },
-  //   {
-  //     id: 2,
-  //     type: 'paragraph',
-  //     children: [{ text: 'foo' }],
-  //   },
-  //   {
-  //     id: 3,
-  //     type: 'paragraph',
-  //     children: [
-  //       { text: 'parent' },
-  //       {
-  //         id: 4,
-  //         type: 'paragraph',
-  //         children: [{ text: 'child1' }],
-  //       },
-  //       {
-  //         id: 5,
-  //         type: 'paragraph',
-  //         children: [{ text: 'child2 ' }],
-  //       },
-  //     ],
-  //   },
-  // ]);
-  const [value, setValue] = React.useState([
-    {
-      id: 1,
-      children: [{ text: '' }],
-    },
-  ]);
+  const renderElement = React.useCallback((props: RenderElementProps) => {
+    return <DefaultElement {...props} />;
+  }, []);
+
+  return (
+    <Slate
+      editor={editor}
+      value={localValue}
+      onChange={(newValue) => {
+        setLocalValue(
+          produce(newValue, (val) => {
+            for (let i = 0; i < val.length; ++i) {
+              // invariant: all nodes only contain leaf (text) nodes as children.
+              // TODO: don't do this check in prod
+              if (!val[i].children.every((child) => Text.isText(child))) {
+                console.warn(`Slate node ${i} is not flat: `, val[i]);
+              }
+              // node splitting will cause the two pieces of the split node to share
+              // the same ID. as a hacky workaround, check for consecutive nodes
+              // with the same ID and give the second one a new ID
+              if (i > 0 && val[i - 1].id === val[i].id) {
+                val[i].id = nanoid();
+              }
+            }
+          })
+        );
+      }}
+    >
+      <Editable renderElement={renderElement} />
+    </Slate>
+  );
+};
+
+const reducer = (state: State, action: any): State => state;
+
+const App: React.FunctionComponent<{}> = (props: {}) => {
+  const [state, dispatch] = React.useReducer(reducer, initialState());
+  const { tree, currentNode } = state;
+  const { data, parent, children } = tree[currentNode];
+
+  const initialEditorData = children.map((id) => ({ id, ...tree[id].data }));
+  const mergeEditorData = React.useCallback((data: SlateNode[]) => {
+    console.log('merging data: ', data);
+  }, []);
 
   return (
     <div className="container mx-auto m-8">
-      <h3 className="font-sans text-lg font-semibold">Some topic title</h3>
+      {data && <TitleElement {...data} />}
       <div className="flex flex-col space-y-2 ml-2 my-4">
-        <Slate
-          editor={editor}
-          value={value}
-          onChange={(newValue) => {
-            console.log(newValue);
-            setValue(newValue);
-          }}
-        >
-          <Editable
-            renderElement={renderElement}
-            onDOMBeforeInput={onDOMBeforeInput}
-          />
-        </Slate>
+        <SlateContainer
+          value={initialEditorData}
+          mergeValue={mergeEditorData}
+        />
       </div>
     </div>
   );
