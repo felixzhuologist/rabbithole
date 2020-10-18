@@ -3,6 +3,7 @@ import { Node as SlateNode } from 'slate';
 import { RenderElementProps } from 'slate-react';
 
 type CustomRenderProps = {
+  // rb prefix to avoid any clashes with slate properties
   rbOnPush: (id: string, localState: SlateNode[]) => void;
 };
 

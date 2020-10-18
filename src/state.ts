@@ -77,7 +77,7 @@ export const reducer = produce(
 
           // if we're about to push into a new node with no children yet,
           // initialize them first
-          if (node.id === nextId) {
+          if (node.id === nextId && state.tree[nextId].children.length === 0) {
             const id = nanoid();
             const newNode: Node = {
               data: { type: 'paragraph', children: [{ text: '' }] },

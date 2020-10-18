@@ -30,14 +30,18 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
   return (
     <div className="container mx-auto m-8">
       {data && <TitleElement {...data} />}
-      <div className="flex flex-col space-y-2 ml-2 my-4">
-        <SlateContainer
-          value={initialEditorData}
-          onPush={(id: string, localState: SlateNode[]) => {
-            dispatch({ type: SET_NODE, payload: { id, localState } });
-          }}
-        />
-      </div>
+      <SlateContainer
+        value={initialEditorData}
+        onPush={(id: string, localState: SlateNode[]) => {
+          dispatch({ type: SET_NODE, payload: { id, localState } });
+        }}
+        onPop={
+          parent &&
+          ((localState: SlateNode[]) => {
+            dispatch({ type: SET_NODE, payload: { id: parent, localState } });
+          })
+        }
+      />
     </div>
   );
 };
