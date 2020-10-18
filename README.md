@@ -1,20 +1,22 @@
-# Rabbit hole
+## 🐰 <br/> 🕳️
 
-## Setup
+A better text editor for keeping track of and documenting work.
+
+### Setup
 
 	npm install
 
-## Running
+### Running
 
 	npm run start
 
-## Formatting code
+### Formatting code
 
 	npm run format
 
-## Other commands
+### Other commands
 
-### Build CSS only
+#### Build CSS only
 
 When developing, use
 
