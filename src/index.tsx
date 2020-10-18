@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ContentEditable from 'react-contenteditable';
-import { createEditor } from 'slate';
+import { Editor, Node as SlateNode, createEditor } from 'slate';
 import { Slate, Editable, withReact, RenderElementProps } from 'slate-react';
 
 import Button from './Button';
@@ -53,6 +53,42 @@ import Button from './Button';
 //   };
 // };
 
+type Id = number;
+
+type Node = {
+  data: SlateNode | null;
+  parent: Id | null;
+  children: Id[];
+};
+
+type Tree = { [key: number]: Node };
+
+type State = {
+  tree: Tree;
+  currentNode: Id;
+  nextId: number;
+};
+
+const initialState: State = {
+  tree: {
+    '0': {
+      data: null,
+      parent: null,
+      children: [1],
+    },
+    '1': {
+      data: {
+        type: 'paragraph',
+        children: [{ text: 'some starter text for ya' }],
+      },
+      parent: 0,
+      children: [],
+    }
+  },
+  currentNode: 0,
+  nextId: 2,
+};
+
 const DefaultElement = (props: RenderElementProps) => (
   <div {...props.attributes} className={`flex data-row space-x-2`}>
     <button
@@ -62,6 +98,7 @@ const DefaultElement = (props: RenderElementProps) => (
       className="data-row-actions inline-flex items-center text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
       onClick={() => {
         {
+          console.log(props.element.id);
           /*dispatch({ type: SET_NODE, payload: id as SetNode });*/
         }
       }}
@@ -88,7 +125,14 @@ const DefaultElement = (props: RenderElementProps) => (
   </div>
 );
 
-const App: React.FunctionComponent<Props> = (props: Props) => {
+// https://github.com/ianstormtaylor/slate/blob/master/packages/slate-react/src/components/editable.tsx#L235
+// For some reason this type isn't exported. Is this different from the type that
+// the local onDOMBeforeInput receives?
+type SlateEvent = Event & {
+  inputType: string;
+};
+
+const App: React.FunctionComponent<{}> = (props: {}) => {
   const [visibleNodes, setVisibleNodes] = React.useState(new Set([1, 3]));
 
   const renderElement = React.useCallback(
@@ -101,33 +145,50 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
     [visibleNodes]
   );
   const editor = React.useMemo(() => withReact(createEditor()), []);
+  const onDOMBeforeInput = React.useCallback((event: SlateEvent) => {
+    const { inputType } = event;
+    switch (inputType) {
+      case 'insertParagraph': {
+        Editor.insertBreak(editor)
+        event.preventDefault();
+        break;
+      }
+    }
+  }, [editor]);
+
+  // const [value, setValue] = React.useState([
+  //   {
+  //     id: 1,
+  //     type: 'paragraph',
+  //     children: [{ text: 'some text.' }],
+  //   },
+  //   {
+  //     id: 2,
+  //     type: 'paragraph',
+  //     children: [{ text: 'foo' }],
+  //   },
+  //   {
+  //     id: 3,
+  //     type: 'paragraph',
+  //     children: [
+  //       { text: 'parent' },
+  //       {
+  //         id: 4,
+  //         type: 'paragraph',
+  //         children: [{ text: 'child1' }],
+  //       },
+  //       {
+  //         id: 5,
+  //         type: 'paragraph',
+  //         children: [{ text: 'child2 ' }],
+  //       },
+  //     ],
+  //   },
+  // ]);
   const [value, setValue] = React.useState([
     {
       id: 1,
-      type: 'paragraph',
-      children: [{ text: 'some text.' }],
-    },
-    {
-      id: 2,
-      type: 'paragraph',
-      children: [{ text: 'foo' }],
-    },
-    {
-      id: 3,
-      type: 'paragraph',
-      children: [
-        { text: 'parent' },
-        {
-          id: 4,
-          type: 'paragraph',
-          children: [{ text: 'child1' }],
-        },
-        {
-          id: 5,
-          type: 'paragraph',
-          children: [{ text: 'child2 ' }],
-        },
-      ],
+      children: [{ text: '' }],
     },
   ]);
 
@@ -143,7 +204,10 @@ const App: React.FunctionComponent<Props> = (props: Props) => {
             setValue(newValue);
           }}
         >
-          <Editable renderElement={renderElement} />
+          <Editable
+            renderElement={renderElement}
+            onDOMBeforeInput={onDOMBeforeInput}
+          />
         </Slate>
       </div>
     </div>
