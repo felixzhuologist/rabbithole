@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import Button from './components/Button';
 import TitleElement from './components/TitleElement';
 import SlateContainer from './components/SlateContainer';
-import { initialState, reducer } from './state';
+import { INIT_CHILDREN, SET_NODE, initialState, reducer } from './state';
 
 const App: React.FunctionComponent<{}> = (props: {}) => {
   const [state, dispatch] = React.useReducer(reducer, initialState());
@@ -16,6 +16,11 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
     console.log('merging data: ', data);
   }, []);
 
+  if (children.length === 0) {
+    dispatch({ type: INIT_CHILDREN, payload: currentNode });
+    return null;
+  }
+
   return (
     <div className="container mx-auto m-8">
       {data && <TitleElement {...data} />}
@@ -23,7 +28,7 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
         <SlateContainer
           value={initialEditorData}
           mergeValue={mergeEditorData}
-          onPush={(id: string) => console.log(id)}
+          onPush={(id: string) => dispatch({ type: SET_NODE, payload: id })}
         />
       </div>
     </div>

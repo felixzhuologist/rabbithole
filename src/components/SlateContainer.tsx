@@ -16,6 +16,11 @@ type Props = {
 const SlateContainer = (props: Props) => {
   const { value, mergeValue, onPush } = props;
   const [localValue, setLocalValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
   React.useEffect(() => {
     return () => {
       mergeValue(localValue);
