@@ -105,7 +105,7 @@ const DefaultElement = (props: RenderElementProps) => (
       style={{ userSelect: 'none' }}
       contentEditable={false}
       type="button"
-      className="data-row-actions inline-flex items-center text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
+      className="data-row-actions inline-flex items-start text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
       onClick={() => {
         {
           console.log(props.element.id);
