@@ -1,20 +1,26 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Node as SlateNode } from 'slate';
 
 import Button from './components/Button';
 import TitleElement from './components/TitleElement';
 import SlateContainer from './components/SlateContainer';
-import { MERGE_DATA, INIT_CHILDREN, SET_NODE, initialState, reducer } from './state';
+import {
+  MERGE_DATA,
+  INIT_CHILDREN,
+  SET_NODE,
+  initialState,
+  reducer,
+} from './state';
 
 const App: React.FunctionComponent<{}> = (props: {}) => {
   const [state, dispatch] = React.useReducer(reducer, initialState());
   const { tree, currentNode } = state;
   const { data, parent, children } = tree[currentNode];
 
-  const initialEditorData = children.map((id) => ({ id, ...tree[id].data }));
-  const mergeEditorData = React.useCallback((data: SlateNode[]) => {
-    dispatch({ type: MERGE_DATA, payload: data });
-  }, []);
+  // TODO: the reducer keeps the IDs when merging nodes back into the state,
+  // so this is really only necessary before the first merge
+  const initialEditorData = children.map((id) => ({ ...tree[id].data, id }));
 
   if (children.length === 0) {
     dispatch({ type: INIT_CHILDREN, payload: currentNode });
@@ -27,8 +33,9 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
       <div className="flex flex-col space-y-2 ml-2 my-4">
         <SlateContainer
           value={initialEditorData}
-          mergeValue={mergeEditorData}
-          onPush={(id: string) => dispatch({ type: SET_NODE, payload: id })}
+          onPush={(id: string, localState: SlateNode[]) => {
+            dispatch({ type: SET_NODE, payload: { id, localState } });
+          }}
         />
       </div>
     </div>

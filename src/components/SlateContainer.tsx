@@ -9,19 +9,32 @@ import DefaultElement from './DefaultElement';
 
 type Props = {
   value: SlateNode[];
-  mergeValue: (value: SlateNode[]) => void;
   onPush: (id: string, localState: SlateNode[]) => void;
 };
 
 const SlateContainer = (props: Props) => {
-  const { value, mergeValue, onPush } = props;
+  const { value, onPush } = props;
   const [localValue, setLocalValue] = React.useState(value);
 
   const editor = React.useMemo(() => withReact(createEditor()), []);
 
-  const renderElement = React.useCallback((props: RenderElementProps) => {
-    return <DefaultElement {...props} rbOnPush={onPush} localState={localValue} />;
-  }, [localValue]);
+  React.useEffect(() => {
+    if (value !== localValue) {
+      // with a new local value, the current selection may no longer be valid
+      // (e.g. the selection is out of bounds for the new text)
+      editor.selection = null;
+      setLocalValue(value);
+    }
+  }, [value]);
+
+  const renderElement = React.useCallback(
+    (props: RenderElementProps) => {
+      return (
+        <DefaultElement {...props} rbOnPush={onPush} localState={localValue} />
+      );
+    },
+    [localValue]
+  );
 
   return (
     <Slate
