@@ -4,7 +4,7 @@ type Props = {
   onClick: () => void;
 };
 
-const Button: React.FunctionComponent<Props> = (props) => {
+const Button = (props: Props) => {
   const { children, onClick } = props;
   return (
     <button
