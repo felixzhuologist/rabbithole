@@ -95,23 +95,27 @@ const initialState = (): State => {
 };
 
 // TODO: generalize
-const TitleElement = (props: SlateNode) => (
-  <h3 className="font-sans text-lg font-semibold">{props.children[0].text}</h3>
-);
+const TitleElement = (props: SlateNode) => {
+  console.log(props);
+  return (
+    <h3 className="font-sans text-lg font-semibold">
+      {props.children[0].text}
+    </h3>
+  );
+};
 
-const DefaultElement = (props: RenderElementProps) => (
+type CustomRenderProps = {
+  rbOnPush: (id: string) => void;
+};
+
+const DefaultElement = (props: RenderElementProps & CustomRenderProps) => (
   <div {...props.attributes} className={`flex data-row space-x-2 border`}>
     <button
       style={{ userSelect: 'none' }}
       contentEditable={false}
       type="button"
       className="data-row-actions inline-flex items-start text-xs leading-4 font-medium rounded hover:bg-orange-100 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
-      onClick={() => {
-        {
-          console.log(props.element.id);
-          /*dispatch({ type: SET_NODE, payload: id as SetNode });*/
-        }
-      }}
+      onClick={() => props.rbOnPush(props.element.id)}
     >
       <svg
         className="text-orange-700 h-5 w-5"
@@ -138,11 +142,11 @@ const DefaultElement = (props: RenderElementProps) => (
 type SlateContainerProps = {
   value: SlateNode[];
   mergeValue: (value: SlateNode[]) => void;
-  generateId: () => Id;
+  onPush: (id: string) => void;
 };
 
 const SlateContainer = (props: SlateContainerProps) => {
-  const { value, mergeValue } = props;
+  const { value, mergeValue, onPush } = props;
   const [localValue, setLocalValue] = React.useState(value);
   React.useEffect(() => {
     return () => {
@@ -153,7 +157,7 @@ const SlateContainer = (props: SlateContainerProps) => {
   const editor = React.useMemo(() => withReact(createEditor()), []);
 
   const renderElement = React.useCallback((props: RenderElementProps) => {
-    return <DefaultElement {...props} />;
+    return <DefaultElement {...props} rbOnPush={onPush} />;
   }, []);
 
   return (
@@ -219,6 +223,7 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
         <SlateContainer
           value={initialEditorData}
           mergeValue={mergeEditorData}
+          onPush={(id: string) => console.log(id)}
         />
       </div>
     </div>
