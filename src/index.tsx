@@ -1,4 +1,5 @@
 import produce from 'immer';
+import isHotKey from 'is-hotkey';
 import { nanoid } from 'nanoid';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -99,7 +100,7 @@ const TitleElement = (props: SlateNode) => (
 );
 
 const DefaultElement = (props: RenderElementProps) => (
-  <div {...props.attributes} className={`flex data-row space-x-2`}>
+  <div {...props.attributes} className={`flex data-row space-x-2 border`}>
     <button
       style={{ userSelect: 'none' }}
       contentEditable={false}
@@ -179,7 +180,22 @@ const SlateContainer = (props: SlateContainerProps) => {
         );
       }}
     >
-      <Editable renderElement={renderElement} />
+      <Editable
+        onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+          // by default make enter a soft break, and shift+enter a hard break
+          if (isHotKey('shift+enter', event)) {
+            event.preventDefault();
+            editor.insertBreak(editor);
+            return;
+          }
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            editor.insertText('\n');
+            return;
+          }
+        }}
+        renderElement={renderElement}
+      />
     </Slate>
   );
 };
