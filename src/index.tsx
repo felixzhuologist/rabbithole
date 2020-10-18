@@ -22,11 +22,6 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
   // so this is really only necessary before the first merge
   const initialEditorData = children.map((id) => ({ ...tree[id].data, id }));
 
-  if (children.length === 0) {
-    dispatch({ type: INIT_CHILDREN, payload: currentNode });
-    return null;
-  }
-
   return (
     <div className="container mx-auto m-8">
       {data && <TitleElement {...data} />}

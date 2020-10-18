@@ -41,7 +41,6 @@ export const initialState = (): State => {
 };
 
 export const SET_NODE = 'SET_NODE';
-export const INIT_CHILDREN = 'INIT_CHILDREN';
 
 // TODO: type actions once they become unwieldy
 export const reducer = produce(
@@ -92,61 +91,9 @@ export const reducer = produce(
         // finally, set the current node to the pushed node's ID
         state.currentNode = nextId;
         break;
-      case INIT_CHILDREN:
-        state.tree = treeReducer(state.tree, action);
-        break;
-      case MERGE_DATA:
-        const payload = action.payload as SlateNode[];
-        const updated = action.payload.map((node) => node.id);
-
-        let parentId = null;
-        action.payload.forEach((node) => {
-          const withoutId = {
-            type: node.type,
-            children: node.children,
-          };
-          if (node.id in state.tree) {
-            state.tree[node.id].data = withoutId;
-
-            // NOTE: the parents should all be the same. it would maybe be
-            // worth logging if that's not the case.
-            parentId = parentId || state.tree[node.id].parent;
-          } else {
-            console.assert(parentId !== null);
-            state.tree[node.id] = {
-              data: withoutId,
-              parent: parentId,
-              children: [],
-            };
-          }
-        });
-
-        state.tree[parentId].children = updated;
-        break;
       default:
         break;
     }
     console.log(current(state));
-  }
-);
-
-export const treeReducer = produce(
-  (tree: Tree, action: any): Tree => {
-    switch (action.type) {
-      case INIT_CHILDREN: {
-        const id = nanoid();
-        const newNode: Node = {
-          data: { type: 'paragraph', children: [{ text: '' }] },
-          parent: action.payload,
-          children: [],
-        };
-
-        tree[action.payload].children = [id];
-        tree[id] = newNode;
-        break;
-      }
-      default:
-        break;
-    }
   }
 );
