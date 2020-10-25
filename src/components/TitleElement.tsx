@@ -1,19 +1,22 @@
 import React from 'react';
 import { Node as SlateNode } from 'slate';
 
-type Props = SlateNode & {
+type Props = {
+  node: SlateNode | null;
   onClick: () => void;
 };
 
 // TODO: generalize
 const TitleElement = (props: Props) => {
+  const { node, onClick } = props;
+  if (node === null) {
+    // TODO: this height is hardcoded to the height of the div when there
+    // is content. There's definitely a better way to do this.
+    return <div style={{ minHeight: 27 }} />;
+  }
   return (
     <div className="flex data-row space-x-2">
-      <button
-        type="button"
-        className="data-row-actions"
-        onClick={props.onClick}
-      >
+      <button type="button" className="data-row-actions" onClick={onClick}>
         <svg
           className="text-orange-700 h-5 w-5"
           xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +33,7 @@ const TitleElement = (props: Props) => {
         </svg>
       </button>
       <h3 className="font-sans text-lg font-semibold">
-        {props.children[0].text}
+        {node.children[0].text}
       </h3>
     </div>
   );

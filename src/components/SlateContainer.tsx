@@ -43,7 +43,7 @@ const SlateContainer = (props: Props) => {
 
   return (
     <React.Fragment>
-      {title && <TitleElement {...title} onClick={() => onPop(localValue)} />}
+      <TitleElement node={title} onClick={() => onPop(localValue)} />
       <div className="flex flex-col space-y-2 ml-2 my-4">
         <Slate
           editor={editor}
@@ -79,6 +79,25 @@ const SlateContainer = (props: Props) => {
               if (event.key === 'Enter') {
                 event.preventDefault();
                 editor.insertText('\n');
+                return;
+              }
+              if (isHotKey('cmd+j', event) && editor.selection) {
+                event.preventDefault();
+                // Editor.node will return the leaf text node, so what we want
+                // is Editor.parent which will be the SlateNode (i.e. containing the id)
+                const currentNode = Editor.parent(editor, editor.selection)[0];
+                console.assert(
+                  currentNode.id,
+                  'queried node for push has no id: ',
+                  currentNode
+                );
+                onPush(currentNode.id, localValue);
+                return;
+              }
+              // TODO: this should be a global event handler
+              if (isHotKey('cmd+k', event) && onPop) {
+                event.preventDefault();
+                onPop(localValue);
                 return;
               }
             }}
