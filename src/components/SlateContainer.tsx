@@ -7,15 +7,17 @@ import { Slate, Editable, withReact, RenderElementProps } from 'slate-react';
 
 import Button from './Button';
 import DefaultElement from './DefaultElement';
+import TitleElement from './TitleElement';
 
 type Props = {
+  title: SlateNode | null;
   value: SlateNode[];
   onPush: (id: string, localState: SlateNode[]) => void;
   onPop: null | ((localState: SlateNode[]) => void);
 };
 
 const SlateContainer = (props: Props) => {
-  const { value, onPush, onPop } = props;
+  const { value, title, onPush, onPop } = props;
   const [localValue, setLocalValue] = React.useState(value);
 
   const editor = React.useMemo(() => withReact(createEditor()), []);
@@ -41,6 +43,7 @@ const SlateContainer = (props: Props) => {
 
   return (
     <React.Fragment>
+      {title && <TitleElement {...title} onClick={() => onPop(localValue)} />}
       <div className="flex flex-col space-y-2 ml-2 my-4">
         <Slate
           editor={editor}
@@ -82,11 +85,6 @@ const SlateContainer = (props: Props) => {
             renderElement={renderElement}
           />
         </Slate>
-      </div>
-      <div className="flex space-x-2">
-        {onPop !== null && (
-          <Button onClick={() => onPop(localValue)}>pop</Button>
-        )}
       </div>
     </React.Fragment>
   );

@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { Node as SlateNode } from 'slate';
 
 import Button from './components/Button';
-import TitleElement from './components/TitleElement';
 import SlateContainer from './components/SlateContainer';
 import {
   MERGE_DATA,
@@ -24,8 +23,8 @@ const App: React.FunctionComponent<{}> = (props: {}) => {
 
   return (
     <div className="container mx-auto m-8">
-      {data && <TitleElement {...data} />}
       <SlateContainer
+        title={data}
         value={initialEditorData}
         onPush={(id: string, localState: SlateNode[]) => {
           dispatch({ type: SET_NODE, payload: { id, localState } });

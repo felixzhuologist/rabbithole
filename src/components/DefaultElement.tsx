@@ -9,7 +9,7 @@ type CustomRenderProps = {
 
 // TODO: augment RenderElementProps.Element with our own custom fields
 const DefaultElement = (props: RenderElementProps & CustomRenderProps) => (
-  <div {...props.attributes} className={`flex data-row space-x-2 border`}>
+  <div {...props.attributes} className={`flex data-row space-x-2`}>
     <button
       style={{ userSelect: 'none' }}
       contentEditable={false}
