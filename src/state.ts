@@ -30,7 +30,17 @@ export const initialState = (): State => {
       [childId]: {
         data: {
           type: 'paragraph',
-          children: [{ text: 'some starter text for ya' }],
+          children: [
+            // {
+            //   type: 'paragraph',
+            //   children: [{ text: 'some starter text for ya' }],
+            // },
+            { text: 'some starter text for ya' },
+            {
+              type: 'code',
+              children: [{ text: 'foobar' }],
+            },
+          ],
         },
         parent: rootId,
         children: [],

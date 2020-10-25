@@ -6,7 +6,8 @@ type Props = {
   onClick: () => void;
 };
 
-// TODO: generalize
+// TODO: it might be better to put this in the Slate editor instead of
+// handling specially (see forced layout example)
 const TitleElement = (props: Props) => {
   const { node, onClick } = props;
   if (node === null) {

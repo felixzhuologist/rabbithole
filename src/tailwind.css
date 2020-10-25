@@ -9,3 +9,8 @@
 .data-row:hover > .data-row-actions {
   visibility: visible;
 }
+
+pre {
+	background: #183055;
+	color: #E6ECF3;
+}
